@@ -2,13 +2,13 @@
 
 [[package]]
 name = "algokit-utils"
-version = "2.4.0"
+version = "2.3.0"
 description = "Utilities for Algorand development for use by AlgoKit"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "algokit_utils-2.4.0-py3-none-any.whl", hash = "sha256:acf1f6ea7be59b3bfcc425d54f416d07270ddbd79452c1111f427f43f78fa7dd"},
+    {file = "algokit_utils-2.3.0-py3-none-any.whl", hash = "sha256:551b7f5a082784d9a47d973749ca208936fd03f07f1cd08748085bd8bf249779"},
 ]
 
 [package.dependencies]
@@ -602,7 +602,6 @@ description = "Backported and Experimental Type Hints for Python 3.9+"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "python_version < \"3.13\""
 files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
@@ -697,5 +696,5 @@ dev = ["pytest", "setuptools"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.10"
-content-hash = "17dea81748e4572d4f193a60e94a9f14c9a86437135774d6bad574b8cf2d5130"
+python-versions = ">=3.10,<3.12"
+content-hash = "01c8ef7329114ae032cf6217fa78b8c9d61e823b2ec6746036e82236bb84097e"

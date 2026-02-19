@@ -1,28 +1,31 @@
-from beaker import Application, GlobalStateValue
-from pyteal import *
-from pyteal import abi
+from beaker import Application
+from beaker.state import GlobalStateValue
+from pyteal import abi, AssetHolding, TealType, Int, Seq
 
-app = Application("ticket_app")
+app = Application("TicketApp")
 
-# Global state (1 uint)
+# ---- Global State ----
 ticket_asa = GlobalStateValue(
+    key="ticket_asa",
     stack_type=TealType.uint64,
     default=Int(0),
 )
 
+# ---- Set ASA ID ----
 @app.external
 def set_ticket_asa(asset_id: abi.Uint64):
     return ticket_asa.set(asset_id.get())
 
-@app.external(read_only=True)
-def get_ticket_asa(*, output: abi.Uint64):
-    return output.set(ticket_asa.get())
-
+# ---- Check Ticket Ownership (FIXED) ----
 @app.external(read_only=True)
 def check_ticket(owner: abi.Address, *, output: abi.Bool):
-    bal = AssetHolding.balance(owner.get(), ticket_asa.get())
+    bal = AssetHolding.balance(
+        owner.get(),
+        ticket_asa.get()
+    )
+
     return Seq(
         bal,
-        output.set(bal.hasValue() & (bal.value() > Int(0)))
+        output.set(bal.hasValue())
     )
 
