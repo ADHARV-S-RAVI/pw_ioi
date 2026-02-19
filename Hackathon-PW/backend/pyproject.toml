@@ -10,6 +10,9 @@ algokit-utils = "2.4.0"
 beaker-pyteal = "1.1.1"
 pyteal = "0.24.1"
 setuptools = "<81"
+fastapi = "^0.104.1"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+pydantic = {extras = ["email"], version = "^2.5.0"}
 
 [build-system]
 requires = ["poetry-core"]

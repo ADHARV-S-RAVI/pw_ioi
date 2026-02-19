@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Ticket, 
   ShieldCheck, 
@@ -8,14 +9,8 @@ import {
   Menu, 
   X,
   Zap,
-  Wallet,
-  Globe,
-  Lock,
   Sun,
   Moon,
-  Mail,
-  User,
-  ArrowRight
 } from 'lucide-react';
 
 // --- Utility Components ---
@@ -218,150 +213,16 @@ const FeatureCard = ({ icon: Icon, title, description, color }) => (
   </TiltCard>
 );
 
-const AuthPage = ({ navigate }) => {
-  const [isLogin, setIsLogin] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleAuth = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigate('landing');
-    }, 1500);
-  };
-
-  return (
-    <div className="min-h-screen pt-20 bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-cyan-500/20 rounded-full blur-[100px]"></div>
-      </div>
-
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-        
-        {/* Left Side - Visuals */}
-        <div className="hidden md:flex flex-col justify-center">
-          <TiltCard>
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-               
-               <h2 className="text-3xl font-bold text-white mb-4">
-                 {isLogin ? "Welcome Back!" : "Join the Future"}
-               </h2>
-               <p className="text-slate-400 mb-8 leading-relaxed">
-                 {isLogin 
-                   ? "Access your NFT tickets, manage your events, and check your wallet balance." 
-                   : "Create an account to start buying and selling fraud-proof tickets on Algorand."}
-               </p>
-
-               <div className="space-y-4">
-                 <div className="flex items-center gap-4 text-slate-300">
-                   <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                     <ShieldCheck className="w-5 h-5 text-cyan-400" />
-                   </div>
-                   <div>
-                     <p className="font-bold text-white">Bank-Grade Security</p>
-                     <p className="text-xs">Powered by Algorand</p>
-                   </div>
-                 </div>
-                 <div className="flex items-center gap-4 text-slate-300">
-                   <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                     <Zap className="w-5 h-5 text-purple-400" />
-                   </div>
-                   <div>
-                     <p className="font-bold text-white">Instant Transfer</p>
-                     <p className="text-xs">Send tickets in seconds</p>
-                   </div>
-                 </div>
-               </div>
-            </div>
-          </TiltCard>
-        </div>
-
-        {/* Right Side - Form */}
-        <TiltCard>
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-200 dark:border-white/10">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                {isLogin ? "Sign In" : "Create Account"}
-              </h2>
-              <p className="text-slate-500 text-sm mt-2">
-                {isLogin ? "Don't have an account?" : "Already have an account?"} {" "}
-                <button 
-                  onClick={() => setIsLogin(!isLogin)} 
-                  className="text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
-                >
-                  {isLogin ? "Sign Up" : "Log In"}
-                </button>
-              </p>
-            </div>
-
-            <form onSubmit={handleAuth} className="space-y-5">
-              {!isLogin && (
-                <div className="relative group">
-                  <User className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Full Name" 
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white placeholder-slate-400"
-                  />
-                </div>
-              )}
-              
-              <div className="relative group">
-                <Mail className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
-                <input 
-                  type="email" 
-                  placeholder="Email Address" 
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white placeholder-slate-400"
-                />
-              </div>
-
-              <div className="relative group">
-                <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
-                <input 
-                  type="password" 
-                  placeholder="Password" 
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white placeholder-slate-400"
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-cyan-500/25 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
-              >
-                {loading ? "Processing..." : (
-                  <>
-                    {isLogin ? "Sign In" : "Get Started"} <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200 dark:border-white/10"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-slate-900 text-slate-500">Or continue with</span>
-              </div>
-            </div>
-
-            <button className="w-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/50 text-yellow-600 dark:text-yellow-400 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-3">
-              <Wallet className="w-5 h-5" />
-              Connect Pera Wallet
-            </button>
-          </div>
-        </TiltCard>
-      </div>
-    </div>
-  );
-};
-
-const LandingPage = ({ navigate }) => {
+const LandingPage = () => {
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(true);
+
+  const nav = (to) => {
+    if (to === 'auth') navigate('/login');
+    else if (to === 'landing') navigate('/');
+    else if (to === 'events') navigate('/dashboard');
+    else navigate(to);
+  };
 
   useEffect(() => {
     if (darkMode) {
@@ -373,7 +234,7 @@ const LandingPage = ({ navigate }) => {
 
   const toggleTheme = () => setDarkMode(!darkMode);
 
-  const PlaceholderPage = ({ title }) => (
+  const PlaceholderPage = ({ title, navigate }) => (
     <div className="min-h-screen pt-20 bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center text-slate-900 dark:text-white transition-colors duration-300">
       <h1 className="text-4xl font-bold mb-4">{title}</h1>
       <p className="text-slate-500 dark:text-slate-400 mb-8">This page is under construction.</p>
@@ -388,10 +249,10 @@ const LandingPage = ({ navigate }) => {
 
   return (
     <div className={`min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-800 dark:selection:text-cyan-200 ${darkMode ? 'dark' : ''}`}>
-      <Navbar navigate={navigate} darkMode={darkMode} toggleTheme={toggleTheme} />
+      <Navbar navigate={nav} darkMode={darkMode} toggleTheme={toggleTheme} />
       
       <div className="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-        <HeroSection navigate={navigate} />
+        <HeroSection navigate={nav} />
         <div className="py-24 relative bg-white dark:bg-slate-950 transition-colors duration-300">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
