@@ -2,25 +2,25 @@ from beaker.localnet import get_algod_client, get_accounts
 from beaker.client import ApplicationClient
 from contracts.app import app
 
-APP_ID = 1009
+APP_ID = 1008
+TICKET_ASA_ID = 1004
+
 
 def main():
     algod = get_algod_client()
-    accounts = get_accounts()
-
-    owner = accounts[0]  # ticket holder
+    acct = get_accounts()[0]
 
     client = ApplicationClient(
         client=algod,
         app=app,
         app_id=APP_ID,
-        sender=owner.address,
-        signer=owner.signer,
+        sender=acct.address,
+        signer=acct.signer,
     )
 
-    result = client.call("check_ticket", owner=owner.address)
-    print("Has valid ticket:", result.return_value)
+    client.call("set_ticket_asa", asset_id=TICKET_ASA_ID)
+    print("Ticket ASA ID set in contract")
+
 
 if __name__ == "__main__":
     main()
-
