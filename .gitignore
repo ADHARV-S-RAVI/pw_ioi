@@ -32,4 +32,5 @@ dist-ssr
 #backend
 __pycache__/
 *.pyc
+.env.*
 >>>>>>> cfbc0e6c2207fb551a107f52e87bdbb8bf5b4fec
