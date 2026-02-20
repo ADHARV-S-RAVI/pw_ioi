@@ -29,21 +29,30 @@ import {
   ImageOff,
   Loader2,
   TrendingUp,
-  Link as LinkIcon
+  Link2 as LinkIcon
 } from 'lucide-react';
 
 import { peraWallet, connectWallet, reconnectWallet, disconnectWallet } from '../utils/wallet';
 
 // --- Gemini API Configuration ---
-const API_KEY = ""; // Environment provides this at runtime
-const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
-
 const callGemini = async (prompt, systemInstruction = "") => {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`;
+  if (!API_KEY || API_KEY === "") {
+    // Simulation Mode if no API Key is provided
+    const fallbacks = [
+      "Our orbital sensors show that the event is filling up fast! You should secure your passage soon.",
+      "The Algorand blockchain ensures your ticket is as permanent as a star in the night sky.",
+      "I've synchronized your schedule with the upcoming Galaxy Gala. It looks like clear skies ahead!",
+      "Pro tip: Keep your Pera Wallet linked for instant verification at the venue gates.",
+      "The Hackathon Entry Ticket is a rare NFT asset. It's your key to the VIP sectors of the Odyssey Arena."
+    ];
+    await new Promise(r => setTimeout(r, 800)); // Simulate thinking
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  }
 
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`;
   const payload = {
     contents: [{ parts: [{ text: prompt }] }],
-    systemInstruction: { parts: [{ text: systemInstruction }] }
+    system_instruction: { parts: [{ text: systemInstruction }] }
   };
 
   const fetchWithBackoff = async (retries = 0) => {
@@ -53,13 +62,11 @@ const callGemini = async (prompt, systemInstruction = "") => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
       const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that.";
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "The cosmos is quiet today. Try again in a moment.";
     } catch (error) {
-      if (retries < 5) {
+      if (retries < 3) {
         const delay = Math.pow(2, retries) * 1000;
         await new Promise(resolve => setTimeout(resolve, delay));
         return fetchWithBackoff(retries + 1);
@@ -67,7 +74,6 @@ const callGemini = async (prompt, systemInstruction = "") => {
       throw error;
     }
   };
-
   return fetchWithBackoff();
 };
 
@@ -398,9 +404,15 @@ const DashboardPage = () => {
                 <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 text-xs font-bold uppercase tracking-widest hover:text-zinc-100 hover:border-zinc-700 transition-all">View Market</button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {INITIAL_EVENTS.filter(e => e.category === "Ongoing").map(event => (
-                  <EventCard key={event.id} event={event} />
-                ))}
+                {INITIAL_EVENTS
+                  .filter(e => e.category === "Ongoing")
+                  .filter(e =>
+                    e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    e.description.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map(event => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
               </div>
             </section>
 
@@ -410,9 +422,15 @@ const DashboardPage = () => {
                 <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 text-xs font-bold uppercase tracking-widest hover:text-zinc-100 hover:border-zinc-700 transition-all">Calendar</button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {INITIAL_EVENTS.filter(e => e.category === "Upcoming").map(event => (
-                  <EventCard key={event.id} event={event} />
-                ))}
+                {INITIAL_EVENTS
+                  .filter(e => e.category === "Upcoming")
+                  .filter(e =>
+                    e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    e.description.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map(event => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
               </div>
             </section>
           </div>
@@ -542,7 +560,7 @@ const DashboardPage = () => {
                 </button>
               </div>
               <p className="text-[11px] text-zinc-100 font-mono truncate">
-                {connectedAccount}
+                {connectedAccount?.toString()}
               </p>
             </div>
           ) : (
@@ -575,7 +593,10 @@ const DashboardPage = () => {
               <p className="text-[9px] text-emerald-500 font-mono">Asset ID: {algoStatus.asset_id}</p>
             )}
           </div>
-          <button className="w-full flex items-center space-x-3 px-6 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/5 rounded-2xl transition-all">
+          <button
+            onClick={() => { localStorage.clear(); window.location.href = '/'; }}
+            className="w-full flex items-center space-x-3 px-6 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/5 rounded-2xl transition-all"
+          >
             <LogOut size={20} />
             <span className="font-bold uppercase tracking-widest text-xs">Terminate Session</span>
           </button>
@@ -648,10 +669,19 @@ const DashboardPage = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-white text-xl leading-none">Stellar AI</h3>
-                  <p className="text-indigo-200 text-[10px] mt-2 font-black uppercase tracking-[0.25em]">Neural Interface v2.0</p>
+                  <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mt-1.5 flex items-center">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-2 animate-pulse"></span>
+                    {API_KEY ? 'Galactic Neural Link Active' : 'Simulation Mode Engaged'}
+                  </p>
                 </div>
               </div>
-              <button onClick={() => setIsAssistantOpen(false)} className="text-white/60 hover:text-white transition-colors">
+              <button 
+                onClick={() => setIsAssistantOpen(false)} 
+                className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-xl"
+              >
+                <X size={20} />
+              </button>
+            </div>
                 <X size={24} />
               </button>
             </div>
@@ -701,56 +731,59 @@ const DashboardPage = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div >
+  )
+}
 
-      {/* QR Code Modal Overlay */}
-      {showQR && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-300"
-            onClick={() => setShowQR(null)}
-          ></div>
-          <div className="relative bg-zinc-900 w-full max-w-md rounded-[3rem] p-12 border border-zinc-800 shadow-[0_0_100px_rgba(79,70,229,0.1)] animate-in zoom-in-95 duration-300 overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center text-indigo-500 mb-8 ring-4 ring-indigo-500/5">
-                <ShieldCheck size={48} />
-              </div>
-              <h3 className="text-3xl font-black text-zinc-100 mb-2 tracking-tight">{showQR.event}</h3>
-              <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] mb-10">Entry Token Validation</p>
+{/* QR Code Modal Overlay */ }
+{
+  showQR && (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+      <div
+        className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-300"
+        onClick={() => setShowQR(null)}
+      ></div>
+      <div className="relative bg-zinc-900 w-full max-w-md rounded-[3rem] p-12 border border-zinc-800 shadow-[0_0_100px_rgba(79,70,229,0.1)] animate-in zoom-in-95 duration-300 overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+        <div className="flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center text-indigo-500 mb-8 ring-4 ring-indigo-500/5">
+            <ShieldCheck size={48} />
+          </div>
+          <h3 className="text-3xl font-black text-zinc-100 mb-2 tracking-tight">{showQR.event}</h3>
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] mb-10">Entry Token Validation</p>
 
-              <div className="bg-white p-8 rounded-[2.5rem] mb-10 shadow-2xl relative group">
-                <div className="absolute -inset-2 bg-indigo-500/20 rounded-[3rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="w-56 h-56 bg-zinc-50 flex flex-wrap items-center justify-center gap-1.5 overflow-hidden rounded-xl relative z-10">
-                  {[...Array(81)].map((_, i) => (
-                    <div key={i} className={`w-4 h-4 rounded-sm transition-colors duration-1000 ${Math.random() > 0.4 ? 'bg-zinc-950' : 'bg-transparent'}`}></div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="w-full grid grid-cols-2 gap-4 mb-10">
-                <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
-                  <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Vault ID</span>
-                  <span className="text-xs text-indigo-400 font-mono font-bold tracking-tight">{showQR.nftId}</span>
-                </div>
-                <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
-                  <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Expires In</span>
-                  <span className="text-xs text-zinc-200 font-mono font-bold tracking-tight">04:59s</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowQR(null)}
-                className="w-full py-5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl active:scale-95"
-              >
-                Close Secure Vault
-              </button>
+          <div className="bg-white p-8 rounded-[2.5rem] mb-10 shadow-2xl relative group">
+            <div className="absolute -inset-2 bg-indigo-500/20 rounded-[3rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="w-56 h-56 bg-zinc-50 flex flex-wrap items-center justify-center gap-1.5 overflow-hidden rounded-xl relative z-10">
+              {[...Array(81)].map((_, i) => (
+                <div key={i} className={`w-4 h-4 rounded-sm transition-colors duration-1000 ${Math.random() > 0.4 ? 'bg-zinc-950' : 'bg-transparent'}`}></div>
+              ))}
             </div>
           </div>
+
+          <div className="w-full grid grid-cols-2 gap-4 mb-10">
+            <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
+              <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Vault ID</span>
+              <span className="text-xs text-indigo-400 font-mono font-bold tracking-tight">{showQR.nftId}</span>
+            </div>
+            <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
+              <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Expires In</span>
+              <span className="text-xs text-zinc-200 font-mono font-bold tracking-tight">04:59s</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowQR(null)}
+            className="w-full py-5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl active:scale-95"
+          >
+            Close Secure Vault
+          </button>
         </div>
-      )}
+      </div>
     </div>
+  )
+}
+    </div >
   );
 };
 

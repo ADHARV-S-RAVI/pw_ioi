@@ -17,7 +17,11 @@ export const getUser = () => {
 };
 
 export const isAuthenticated = () => {
-  return !!getToken();
+  try {
+    return !!getToken();
+  } catch {
+    return false;
+  }
 };
 
 export const logout = () => {

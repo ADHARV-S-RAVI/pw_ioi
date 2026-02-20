@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Wallet,
 } from 'lucide-react';
+import { connectWallet } from '../utils/wallet';
 
 const TiltCard = ({ children, className = '' }) => {
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
@@ -141,7 +142,7 @@ export default function LoginPage() {
         // Save token and user info to localStorage
         localStorage.setItem('algotix_token', data.token);
         localStorage.setItem('algotix_user', JSON.stringify(data.user));
-        
+
         // Redirect to dashboard
         navigate('/dashboard', { replace: true });
       } else {
@@ -151,12 +152,12 @@ export default function LoginPage() {
       console.error('Login error:', err);
       // More user-friendly error messages
       let errorMessage = err.message || 'Something went wrong. Please try again.';
-      
+
       // Check if it's a network error
       if (err instanceof TypeError && err.message.includes('fetch')) {
         errorMessage = 'Cannot connect to server. Make sure the backend is running on http://localhost:8000';
       }
-      
+
       setError(errorMessage);
       setLoading(false);
     }
@@ -303,6 +304,14 @@ export default function LoginPage() {
 
             <button
               type="button"
+              onClick={async () => {
+                const account = await connectWallet();
+                if (account) {
+                  // Since the app uses email auth, we just connect the wallet here.
+                  // The user still needs to login/signup.
+                  alert(`Wallet connected: ${account.substring(0, 6)}...${account.substring(account.length - 4)}`);
+                }
+              }}
               className="w-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/50 text-yellow-600 dark:text-yellow-400 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-3"
             >
               <Wallet className="w-5 h-5" />
