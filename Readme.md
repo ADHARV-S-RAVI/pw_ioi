@@ -93,6 +93,8 @@ The system bridges a modern React frontend with the Algorand blockchain via the 
 * **Organizers:** Connect your wallet to the dashboard to "Create Event." This triggers an atomic transaction to mint ticket NFTs.
 * **Attendees:** Connect Pera Wallet, browse available events, and purchase tickets directly from the contract.
 * **Check-in:** At the venue, the app verifies the presence of the specific ASA in the user's wallet for instant entry.
+<img width="1919" height="951" alt="Screenshot 2026-02-20 055045" src="https://github.com/user-attachments/assets/db537c6b-ab8f-4a0d-afa5-08754620e5a0" />
+
 
 ---
 
@@ -115,4 +117,5 @@ The system bridges a modern React frontend with the Algorand blockchain via the 
 
 ## 📄 License
 This project is licensed under the MIT License - see the `LICENSE` file for details.
+
 
