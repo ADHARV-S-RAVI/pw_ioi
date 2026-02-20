@@ -35,6 +35,10 @@ import {
 import { peraWallet, connectWallet, reconnectWallet, disconnectWallet } from '../utils/wallet';
 
 // --- Gemini API Configuration ---
+// TO ENABLE LIVE AI: Replace the empty string in API_KEY with your Google AI Studio key.
+const API_KEY = ""; // Fallback to simulation mode if empty
+const GEMINI_MODEL = "gemini-1.5-flash-latest";
+
 const callGemini = async (prompt, systemInstruction = "") => {
   if (!API_KEY || API_KEY === "") {
     // Simulation Mode if no API Key is provided
@@ -88,7 +92,10 @@ const INITIAL_EVENTS = [
     status: "Sold Out",
     image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800",
     category: "Ongoing",
-    description: "A cosmic symphonic experience featuring local campus talent."
+    description: "A cosmic symphonic experience featuring local campus talent.",
+    isVerified: true,
+    isExclusive: true,
+    isTrending: true
   },
   {
     id: 2,
@@ -99,7 +106,10 @@ const INITIAL_EVENTS = [
     status: "Buy Ticket",
     image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&q=80&w=800",
     category: "Upcoming",
-    description: "The funniest stand-up comics from the Computer Science department."
+    description: "The funniest stand-up comics from the Computer Science department.",
+    isVerified: true,
+    isExclusive: false,
+    isTrending: false
   },
   {
     id: 3,
@@ -110,7 +120,10 @@ const INITIAL_EVENTS = [
     status: "Buy Ticket",
     image: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?auto=format&fit=crop&q=80&w=800",
     category: "Upcoming",
-    description: "High-energy rock performances with stellar lighting effects."
+    description: "High-energy rock performances with stellar lighting effects.",
+    isVerified: false,
+    isExclusive: true,
+    isTrending: true
   },
   {
     id: 4,
@@ -121,7 +134,10 @@ const INITIAL_EVENTS = [
     status: "Ongoing",
     image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800",
     category: "Ongoing",
-    description: "The biggest music festival on campus with multiple stages."
+    description: "The biggest music festival on campus with multiple stages.",
+    isVerified: true,
+    isExclusive: false,
+    isTrending: true
   }
 ];
 
@@ -139,6 +155,39 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [showQR, setShowQR] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [marketFilter, setMarketFilter] = useState('All Items');
+  const [isSaving, setIsSaving] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    name: "Alex Johnson",
+    email: "alex@example.com",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+  });
+
+  const FEATURED_SLIDES = [
+    { title: "Galactic Gala: VIP Alpha Pass", desc: "Exclusive early access. Secured by Algorand.", color: "from-indigo-900 via-purple-900 to-zinc-900", img: "https://images.unsplash.com/photo-1514525253361-bee8718a74a2?auto=format&fit=crop&q=80&w=1200" },
+    { title: "Stellar Sound VIP Lounge", desc: "Backstage access for NFT holders.", color: "from-blue-900 via-indigo-900 to-zinc-900", img: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=1200" },
+    { title: "Algorand Arena Open", desc: "Tournament tickets live now.", color: "from-zinc-900 via-emerald-900 to-zinc-900", img: "https://images.unsplash.com/photo-1540575861501-7cf05a4b125a?auto=format&fit=crop&q=80&w=1200" }
+  ];
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (activeTab === 'explore') {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % FEATURED_SLIDES.length);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [activeTab]);
+
+  // Keyboard accessibility for AI Assistant
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsAssistantOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // AI States
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
@@ -303,7 +352,7 @@ const DashboardPage = () => {
         )}
         <button
           onClick={(e) => { e.stopPropagation(); generateInsight(event); }}
-          className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 backdrop-blur-md text-white rounded-xl hover:bg-indigo-600 transition-all shadow-xl border border-white/10 z-10"
+          className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 backdrop-blur-md text-white rounded-xl hover:bg-indigo-600 transition-all shadow-xl border border-white/10 z-10 active:scale-95"
           title="✨ AI Insight"
         >
           {loadingInsight === event.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
@@ -401,7 +450,7 @@ const DashboardPage = () => {
                   <span className="w-3 h-3 bg-red-500 rounded-full mr-4 animate-ping"></span>
                   Live Sessions
                 </h2>
-                <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 text-xs font-bold uppercase tracking-widest hover:text-zinc-100 hover:border-zinc-700 transition-all">View Market</button>
+                <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 text-xs font-bold uppercase tracking-widest hover:text-zinc-100 hover:border-zinc-700 transition-all active:scale-95">View Market</button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {INITIAL_EVENTS
@@ -419,7 +468,7 @@ const DashboardPage = () => {
             <section>
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-black text-zinc-100">Future Drops</h2>
-                <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 text-xs font-bold uppercase tracking-widest hover:text-zinc-100 hover:border-zinc-700 transition-all">Calendar</button>
+                <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 text-xs font-bold uppercase tracking-widest hover:text-zinc-100 hover:border-zinc-700 transition-all active:scale-95">Calendar</button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {INITIAL_EVENTS
@@ -433,6 +482,97 @@ const DashboardPage = () => {
                   ))}
               </div>
             </section>
+          </div>
+        );
+
+      case 'explore':
+        return (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Marketplace Dynamic Slider */}
+            <section className="relative h-64 rounded-[3rem] overflow-hidden group shadow-2xl shadow-indigo-500/10 border border-zinc-800">
+              {FEATURED_SLIDES.map((slide, idx) => (
+                <div
+                  key={idx}
+                  className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'
+                    }`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-r ${slide.color} opacity-80 z-10`}></div>
+                  <img src={slide.img} className="absolute inset-0 w-full h-full object-cover grayscale-[0.5] contrast-[1.2]" alt="" />
+                  <div className="relative h-full flex flex-col justify-center px-12 space-y-4 z-20">
+                    <div className="flex items-center space-x-3">
+                      <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-black text-white uppercase tracking-widest">Featured Drop</div>
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter max-w-xl drop-shadow-2xl">
+                      {slide.title}
+                    </h2>
+                    <p className="text-zinc-300 text-sm max-w-md font-medium drop-shadow-md">
+                      {slide.desc}
+                    </p>
+                    <button className="w-fit px-8 py-3 bg-white text-zinc-950 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-400 hover:text-white transition-all shadow-xl active:scale-95">
+                      Secure Entry
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Slider Dots */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-30">
+                {FEATURED_SLIDES.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-1.5 transition-all duration-300 rounded-full active:scale-90 ${idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/30'}`}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* Marketplace Controls */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center space-x-2 bg-zinc-900 p-1.5 rounded-2xl border border-zinc-800">
+                {['All Items', 'Verified', 'Exclusive', 'Trending'].map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setMarketFilter(filter)}
+                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${marketFilter === filter ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-zinc-500 hover:text-zinc-200'
+                      }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center space-x-6">
+                <div className="text-right">
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Market Volume</p>
+                  <p className="text-lg font-black text-zinc-100 italic">42.8K <span className="text-indigo-400 not-italic">ALGO</span></p>
+                </div>
+                <div className="w-[1px] h-10 bg-zinc-800"></div>
+                <div className="text-right">
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Floor Price</p>
+                  <p className="text-lg font-black text-zinc-100 italic">12.5 <span className="text-indigo-400 not-italic">ALGO</span></p>
+                </div>
+              </div>
+            </div>
+
+            {/* Market Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {INITIAL_EVENTS
+                .filter(event => {
+                  if (marketFilter === 'All Items') return true;
+                  if (marketFilter === 'Verified') return event.isVerified;
+                  if (marketFilter === 'Exclusive') return event.isExclusive;
+                  if (marketFilter === 'Trending') return event.isTrending;
+                  return true;
+                })
+                .filter(event =>
+                  event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  event.description.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map(event => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+            </div>
           </div>
         );
 
@@ -479,11 +619,86 @@ const DashboardPage = () => {
                   </div>
                 </div>
               ))}
-              <div className="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center text-zinc-600 hover:border-indigo-500/50 hover:text-indigo-400 transition-all cursor-pointer group">
+              <div className="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center text-zinc-600 hover:border-indigo-500/50 hover:text-indigo-400 transition-all cursor-pointer group active:scale-[0.98]">
                 <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Compass size={32} />
                 </div>
                 <p className="font-black uppercase tracking-widest text-sm">Scan for new Drops</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'wallet':
+        return (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-black text-zinc-100 uppercase italic tracking-tighter">Digital Vault</h2>
+              <button onClick={handleConnect} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold flex items-center space-x-3 transition-all active:scale-95">
+                <Repeat size={18} />
+                <span>Sync Node</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Asset Card */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-10 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-12 opacity-5 -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-700">
+                  <Wallet size={200} />
+                </div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-emerald-500/20">
+                      Live Balance
+                    </span>
+                    <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-all active:scale-95">
+                      <Repeat size={16} className="text-zinc-400" />
+                    </button>
+                  </div>
+                  <div className="mt-8 flex items-end space-x-4">
+                    <h3 className="text-6xl font-black text-white italic tracking-tighter">452.80</h3>
+                    <span className="text-2xl font-bold text-zinc-600 mb-2">ALGO</span>
+                  </div>
+                  <p className="text-zinc-500 font-medium mt-4 max-w-sm">
+                    Secured by <span className="text-indigo-400 italic font-black">Algorand Mainnet</span>. Assets are non-custodial and synchronized in real-time.
+                  </p>
+
+                  <div className="mt-8 grid grid-cols-2 gap-4">
+                    <button className="py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+                      Transfer Funds
+                    </button>
+                    <button className="py-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
+                      Request Asset
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transaction History Simulation */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-10">
+                <h3 className="text-xl font-black text-zinc-100 mb-8 uppercase italic tracking-tighter">Recent Activities</h3>
+                <div className="space-y-6">
+                  {[
+                    { action: 'Ticket Minted', time: '12h ago', amount: '-45.00', icon: Zap, color: 'text-amber-500' },
+                    { action: 'Transfer Received', time: '2d ago', amount: '+120.00', icon: ArrowRight, color: 'text-emerald-500' },
+                    { action: 'Vault Sync', time: '5d ago', amount: '0.00', icon: ShieldCheck, color: 'text-indigo-500' }
+                  ].map((tx, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-zinc-950/50 rounded-2xl border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer group">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center ${tx.color}`}>
+                          <tx.icon size={18} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-zinc-100 group-hover:text-indigo-400 transition-colors">{tx.action}</p>
+                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{tx.time}</p>
+                        </div>
+                      </div>
+                      <p className={`font-mono text-sm font-bold ${tx.amount.startsWith('+') ? 'text-emerald-500' : 'text-zinc-400'}`}>
+                        {tx.amount} <span className="text-[10px]">ALGO</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -496,22 +711,57 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-1 bg-zinc-900 p-8 rounded-3xl border border-zinc-800">
                 <div className="flex flex-col items-center text-center">
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile" className="w-24 h-24 rounded-2xl mb-4 border-2 border-indigo-500/20" />
-                  <h3 className="text-xl font-black text-zinc-100 mb-1">Alex Johnson</h3>
+                  <div className="relative group">
+                    <img src={userProfile.avatar} alt="Profile" className="w-24 h-24 rounded-2xl mb-4 border-2 border-indigo-500/20 group-hover:border-indigo-500 transition-all" />
+                    <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <Sparkles size={20} className="text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-black text-zinc-100 mb-1">{userProfile.name}</h3>
                   <p className="text-zinc-500 text-sm mb-6">Session: X92A-44</p>
-                  <button className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm transition-all">Edit Profile</button>
+                  <button className="w-full px-4 py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 rounded-xl font-bold text-sm transition-all">Change Avatar</button>
                 </div>
               </div>
               <div className="md:col-span-2 bg-zinc-900 p-8 rounded-3xl border border-zinc-800 space-y-6">
                 <div>
+                  <label className="text-zinc-400 text-sm font-bold uppercase tracking-widest block mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    value={userProfile.name}
+                    onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  />
+                </div>
+                <div>
                   <label className="text-zinc-400 text-sm font-bold uppercase tracking-widest block mb-2">Email Address</label>
-                  <input type="email" value="alex@example.com" className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100" />
+                  <input
+                    type="email"
+                    value={userProfile.email}
+                    onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  />
                 </div>
                 <div>
                   <label className="text-zinc-400 text-sm font-bold uppercase tracking-widest block mb-2">Wallet Address</label>
-                  <input type="text" value="7X8K9P2Q..." disabled className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-500 cursor-not-allowed" />
+                  <input type="text" value={connectedAccount || "Not Linked"} disabled className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-500 cursor-not-allowed font-mono text-xs" />
                 </div>
-                <button className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all">Save Changes</button>
+                <button
+                  onClick={() => {
+                    setIsSaving(true);
+                    setTimeout(() => setIsSaving(false), 2000);
+                  }}
+                  className={`w-full px-6 py-4 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center space-x-2 ${isSaving ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                    }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <ShieldCheck size={18} />
+                      <span>Configuration Saved</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -595,7 +845,7 @@ const DashboardPage = () => {
           </div>
           <button
             onClick={() => { localStorage.clear(); window.location.href = '/'; }}
-            className="w-full flex items-center space-x-3 px-6 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/5 rounded-2xl transition-all"
+            className="w-full flex items-center space-x-3 px-6 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/5 rounded-2xl transition-all active:scale-95"
           >
             <LogOut size={20} />
             <span className="font-bold uppercase tracking-widest text-xs">Terminate Session</span>
@@ -619,18 +869,18 @@ const DashboardPage = () => {
           </div>
 
           <div className="flex items-center space-x-8">
-            <button className="relative text-zinc-400 hover:text-white transition-all p-2.5 bg-zinc-900/50 border border-zinc-800 rounded-2xl hover:border-zinc-700">
+            <button className="relative text-zinc-400 hover:text-white transition-all p-2.5 bg-zinc-900/50 border border-zinc-800 rounded-2xl hover:border-zinc-700 active:scale-95">
               <Bell size={22} />
               <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-indigo-500 rounded-full border-2 border-zinc-950"></span>
             </button>
             <div className="h-10 w-[1px] bg-zinc-800"></div>
-            <div className="flex items-center space-x-4 group cursor-pointer" onClick={() => setActiveTab('profile')}>
+            <div className="flex items-center space-x-4 group cursor-pointer active:scale-95 transition-all" onClick={() => setActiveTab('profile')}>
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-black text-zinc-100 group-hover:text-indigo-400 transition-colors">Alex Johnson</p>
+                <p className="text-sm font-black text-zinc-100 group-hover:text-indigo-400 transition-colors">{userProfile.name}</p>
                 <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mt-0.5">Session: X92A-44</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 p-1 group-hover:scale-110 transition-transform ring-2 ring-transparent group-hover:ring-indigo-600/20">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="user" className="w-full h-full rounded-xl bg-zinc-800" />
+                <img src={userProfile.avatar} alt="user" className="w-full h-full rounded-xl bg-zinc-800" />
               </div>
             </div>
           </div>
@@ -659,131 +909,131 @@ const DashboardPage = () => {
 
       {/* AI Assistant Panel */}
       {isAssistantOpen && (
-        <div className="fixed bottom-36 right-10 w-[420px] h-[600px] bg-zinc-900 border border-zinc-800 rounded-[3rem] shadow-[0_32px_128px_-32px_rgba(0,0,0,0.8)] z-[70] flex flex-col overflow-hidden animate-in slide-in-from-bottom-12 fade-in duration-500">
-          <div className="p-8 bg-indigo-600 relative overflow-hidden">
-            <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="flex items-center justify-between relative z-10">
-              <div className="flex items-center space-x-5">
-                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-                  <Sparkles size={24} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="font-black text-white text-xl leading-none">Stellar AI</h3>
-                  <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mt-1.5 flex items-center">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-2 animate-pulse"></span>
-                    {API_KEY ? 'Galactic Neural Link Active' : 'Simulation Mode Engaged'}
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsAssistantOpen(false)} 
-                className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-xl"
-              >
-                <X size={20} />
-              </button>
-            </div>
-                <X size={24} />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-grow overflow-y-auto p-8 space-y-6 bg-zinc-950/20">
-            {chatMessages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] px-5 py-4 rounded-[1.5rem] text-sm leading-relaxed ${msg.role === 'user'
-                  ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-600/10'
-                  : 'bg-zinc-900 text-zinc-300 rounded-tl-none border border-zinc-800 shadow-sm'
-                  }`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-zinc-900 p-4 rounded-3xl rounded-tl-none border border-zinc-800">
-                  <div className="flex space-x-2">
-                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
+        <>
+          <div
+            className="fixed inset-0 bg-zinc-950/20 backdrop-blur-sm z-[65] animate-in fade-in duration-300"
+            onClick={() => setIsAssistantOpen(false)}
+          ></div>
+          <div className="fixed bottom-36 right-10 w-[420px] h-[600px] bg-zinc-900 border border-zinc-800 rounded-[3rem] shadow-[0_32px_128px_-32px_rgba(0,0,0,0.8)] z-[70] flex flex-col overflow-hidden animate-in slide-in-from-bottom-12 fade-in duration-500">
+            <div className="p-8 bg-indigo-600 relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center space-x-5">
+                  <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                    <Sparkles size={24} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white text-xl leading-none">Stellar AI</h3>
+                    <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mt-1.5 flex items-center">
+                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-2 animate-pulse"></span>
+                      {API_KEY ? 'Galactic Neural Link Active' : 'Simulation Mode Engaged'}
+                    </p>
                   </div>
                 </div>
+                <button
+                  onClick={() => setIsAssistantOpen(false)}
+                  className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-xl"
+                >
+                  <X size={20} />
+                </button>
               </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
+            </div>
 
-          <div className="p-6 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-md">
-            <div className="relative group">
-              <input
-                type="text"
-                placeholder="Message Stellar..."
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 pl-6 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-700"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              />
+            <div className="flex-grow overflow-y-auto p-8 space-y-6 bg-zinc-950/20">
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] px-5 py-4 rounded-[1.5rem] text-sm leading-relaxed ${msg.role === 'user'
+                    ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-600/10'
+                    : 'bg-zinc-900 text-zinc-300 rounded-tl-none border border-zinc-800 shadow-sm'
+                    }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-zinc-900 p-4 rounded-3xl rounded-tl-none border border-zinc-800">
+                    <div className="flex space-x-2">
+                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <div className="p-6 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-md">
+              <div className="relative group">
+                <input
+                  type="text"
+                  placeholder="Message Stellar..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 pl-6 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-700"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!userInput.trim() || isTyping}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-600 transition-all shadow-lg active:scale-90"
+                >
+                  <Send size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* QR Code Modal Overlay */}
+      {showQR && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div
+            className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-300"
+            onClick={() => setShowQR(null)}
+          ></div>
+          <div className="relative bg-zinc-900 w-full max-w-md rounded-[3rem] p-12 border border-zinc-800 shadow-[0_0_100px_rgba(79,70,229,0.1)] animate-in zoom-in-95 duration-300 overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center text-indigo-500 mb-8 ring-4 ring-indigo-500/5">
+                <ShieldCheck size={48} />
+              </div>
+              <h3 className="text-3xl font-black text-zinc-100 mb-2 tracking-tight">{showQR.event}</h3>
+              <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] mb-10">Entry Token Validation</p>
+
+              <div className="bg-white p-8 rounded-[2.5rem] mb-10 shadow-2xl relative group">
+                <div className="absolute -inset-2 bg-indigo-500/20 rounded-[3rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="w-56 h-56 bg-zinc-50 flex flex-wrap items-center justify-center gap-1.5 overflow-hidden rounded-xl relative z-10">
+                  {[...Array(81)].map((_, i) => (
+                    <div key={i} className={`w-4 h-4 rounded-sm transition-colors duration-1000 ${Math.random() > 0.4 ? 'bg-zinc-950' : 'bg-transparent'}`}></div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="w-full grid grid-cols-2 gap-4 mb-10">
+                <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
+                  <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Vault ID</span>
+                  <span className="text-xs text-indigo-400 font-mono font-bold tracking-tight">{showQR.nftId}</span>
+                </div>
+                <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
+                  <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Expires In</span>
+                  <span className="text-xs text-zinc-200 font-mono font-bold tracking-tight">04:59s</span>
+                </div>
+              </div>
+
               <button
-                onClick={handleSendMessage}
-                disabled={!userInput.trim() || isTyping}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-600 transition-all shadow-lg active:scale-90"
+                onClick={() => setShowQR(null)}
+                className="w-full py-5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl active:scale-95"
               >
-                <Send size={18} />
+                Close Secure Vault
               </button>
             </div>
           </div>
-        </div >
-  )
-}
-
-{/* QR Code Modal Overlay */ }
-{
-  showQR && (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-      <div
-        className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-300"
-        onClick={() => setShowQR(null)}
-      ></div>
-      <div className="relative bg-zinc-900 w-full max-w-md rounded-[3rem] p-12 border border-zinc-800 shadow-[0_0_100px_rgba(79,70,229,0.1)] animate-in zoom-in-95 duration-300 overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
-        <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center text-indigo-500 mb-8 ring-4 ring-indigo-500/5">
-            <ShieldCheck size={48} />
-          </div>
-          <h3 className="text-3xl font-black text-zinc-100 mb-2 tracking-tight">{showQR.event}</h3>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] mb-10">Entry Token Validation</p>
-
-          <div className="bg-white p-8 rounded-[2.5rem] mb-10 shadow-2xl relative group">
-            <div className="absolute -inset-2 bg-indigo-500/20 rounded-[3rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="w-56 h-56 bg-zinc-50 flex flex-wrap items-center justify-center gap-1.5 overflow-hidden rounded-xl relative z-10">
-              {[...Array(81)].map((_, i) => (
-                <div key={i} className={`w-4 h-4 rounded-sm transition-colors duration-1000 ${Math.random() > 0.4 ? 'bg-zinc-950' : 'bg-transparent'}`}></div>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full grid grid-cols-2 gap-4 mb-10">
-            <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Vault ID</span>
-              <span className="text-xs text-indigo-400 font-mono font-bold tracking-tight">{showQR.nftId}</span>
-            </div>
-            <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest block mb-1">Expires In</span>
-              <span className="text-xs text-zinc-200 font-mono font-bold tracking-tight">04:59s</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowQR(null)}
-            className="w-full py-5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl active:scale-95"
-          >
-            Close Secure Vault
-          </button>
         </div>
-      </div>
+      )}
     </div>
-  )
-}
-    </div >
   );
 };
 
