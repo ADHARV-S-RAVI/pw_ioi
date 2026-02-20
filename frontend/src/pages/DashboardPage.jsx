@@ -28,8 +28,11 @@ import {
   Sparkles,
   ImageOff,
   Loader2,
-  TrendingUp
+  TrendingUp,
+  Link as LinkIcon
 } from 'lucide-react';
+
+import { peraWallet, connectWallet, reconnectWallet, disconnectWallet } from '../utils/wallet';
 
 // --- Gemini API Configuration ---
 const API_KEY = ""; // Environment provides this at runtime
@@ -37,7 +40,7 @@ const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
 
 const callGemini = async (prompt, systemInstruction = "") => {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`;
-  
+
   const payload = {
     contents: [{ parts: [{ text: prompt }] }],
     systemInstruction: { parts: [{ text: systemInstruction }] }
@@ -50,9 +53,9 @@ const callGemini = async (prompt, systemInstruction = "") => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      
+
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      
+
       const data = await response.json();
       return data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that.";
     } catch (error) {
@@ -130,7 +133,7 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [showQR, setShowQR] = useState(null);
-  
+
   // AI States
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
@@ -140,7 +143,66 @@ const DashboardPage = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [aiInsights, setAiInsights] = useState({});
   const [loadingInsight, setLoadingInsight] = useState(null);
+  const [algoStatus, setAlgoStatus] = useState({ connected: false, app_id: 0, asset_id: 0, last_round: 0 });
+  const [verificationLoading, setVerificationLoading] = useState(null);
+  const [verificationResults, setVerificationResults] = useState({});
+  const [connectedAccount, setConnectedAccount] = useState(null);
   const chatEndRef = useRef(null);
+
+  // Wallet Connection Handlers
+  const handleConnect = async () => {
+    const account = await connectWallet();
+    if (account) setConnectedAccount(account);
+  };
+
+  const handleDisconnect = async () => {
+    await disconnectWallet();
+    setConnectedAccount(null);
+  };
+
+  useEffect(() => {
+    // Reconnect session on load
+    reconnectWallet().then(account => {
+      if (account) setConnectedAccount(account);
+    });
+  }, []);
+
+  const verifyTicket = async (ticket) => {
+    if (!connectedAccount) {
+      alert("Please connect your wallet first!");
+      return;
+    }
+
+    setVerificationLoading(ticket.id);
+    try {
+      const response = await fetch('/api/algo/check-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: connectedAccount })
+      });
+      const data = await response.json();
+      setVerificationResults(prev => ({ ...prev, [ticket.id]: data.has_ticket }));
+    } catch (err) {
+      console.error("Verification failed", err);
+    } finally {
+      setVerificationLoading(null);
+    }
+  };
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await fetch('/api/algo/status');
+        const data = await response.json();
+        setAlgoStatus(data);
+      } catch (err) {
+        console.error("Failed to fetch algo status", err);
+      }
+    };
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 10000); // Poll every 10s
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -148,7 +210,7 @@ const DashboardPage = () => {
 
   const handleSendMessage = async () => {
     if (!userInput.trim()) return;
-    
+
     const newMessages = [...chatMessages, { role: 'user', text: userInput }];
     setChatMessages(newMessages);
     setUserInput("");
@@ -159,7 +221,7 @@ const DashboardPage = () => {
       Events available: ${INITIAL_EVENTS.map(e => `${e.title} at ${e.location} on ${e.date}`).join(', ')}.
       Users buy tickets as Algorand NFTs. 
       Keep responses brief, helpful, and use space/cosmos metaphors.`;
-      
+
       const response = await callGemini(userInput, context);
       setChatMessages([...newMessages, { role: 'ai', text: response }]);
     } catch (err) {
@@ -189,11 +251,10 @@ const DashboardPage = () => {
   const SidebarItem = ({ id, icon: Icon, label }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center space-x-3 px-6 py-4 transition-all duration-200 ${
-        activeTab === id 
-          ? 'text-indigo-500 bg-zinc-900 border-r-4 border-indigo-500' 
-          : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
-      }`}
+      className={`w-full flex items-center space-x-3 px-6 py-4 transition-all duration-200 ${activeTab === id
+        ? 'text-indigo-500 bg-zinc-900 border-r-4 border-indigo-500'
+        : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
+        }`}
     >
       <Icon size={20} />
       <span className="font-medium">{label}</span>
@@ -203,12 +264,12 @@ const DashboardPage = () => {
   // Reliable Image Component with Fallback
   const EventImage = ({ src, alt }) => {
     const [error, setError] = useState(false);
-    
+
     if (error) {
       return (
         <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-zinc-900 to-purple-950 flex flex-col items-center justify-center space-y-3 opacity-90">
           <div className="p-3 bg-indigo-500/10 rounded-full">
-             <ImageOff size={24} className="text-indigo-400/40" />
+            <ImageOff size={24} className="text-indigo-400/40" />
           </div>
           <span className="text-[10px] uppercase tracking-[0.2em] text-indigo-400/40 font-bold">Stellar Visuals</span>
         </div>
@@ -216,9 +277,9 @@ const DashboardPage = () => {
     }
 
     return (
-      <img 
-        src={src} 
-        alt={alt} 
+      <img
+        src={src}
+        alt={alt}
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         onError={() => setError(true)}
       />
@@ -234,7 +295,7 @@ const DashboardPage = () => {
             Live Now
           </div>
         )}
-        <button 
+        <button
           onClick={(e) => { e.stopPropagation(); generateInsight(event); }}
           className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 backdrop-blur-md text-white rounded-xl hover:bg-indigo-600 transition-all shadow-xl border border-white/10 z-10"
           title="✨ AI Insight"
@@ -251,7 +312,7 @@ const DashboardPage = () => {
         <h3 className="text-zinc-100 font-bold text-lg mb-4 leading-tight group-hover:text-indigo-400 transition-colors">
           {event.title}
         </h3>
-        
+
         <div className="space-y-3 mb-8">
           <div className="flex items-center text-zinc-400 text-sm">
             <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center mr-3 group-hover:bg-zinc-700 transition-colors">
@@ -276,7 +337,7 @@ const DashboardPage = () => {
           </div>
           {event.status === "Sold Out" ? (
             <div className="flex flex-col items-end">
-               <button disabled className="px-5 py-2.5 bg-zinc-800 text-zinc-500 rounded-xl cursor-not-allowed text-xs font-bold uppercase tracking-wider">
+              <button disabled className="px-5 py-2.5 bg-zinc-800 text-zinc-500 rounded-xl cursor-not-allowed text-xs font-bold uppercase tracking-wider">
                 Buy Ticket
               </button>
               <span className="text-[9px] text-red-500 font-black mt-1.5 uppercase tracking-tighter">Sold Out</span>
@@ -372,17 +433,32 @@ const DashboardPage = () => {
                       <h3 className="font-black text-xl text-zinc-100 mb-1">{ticket.event}</h3>
                       <p className="text-sm text-zinc-500 font-bold uppercase tracking-widest">{ticket.date}</p>
                       <div className="flex items-center mt-3 px-2 py-1 bg-zinc-950 rounded-lg w-fit">
-                         <span className="text-[9px] text-zinc-600 font-mono tracking-tighter mr-2">NFT ID:</span>
-                         <span className="text-[10px] text-indigo-400 font-mono">{ticket.nftId}</span>
+                        <span className="text-[9px] text-zinc-600 font-mono tracking-tighter mr-2">NFT ID:</span>
+                        <span className="text-[10px] text-indigo-400 font-mono">{ticket.nftId}</span>
                       </div>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => setShowQR(ticket)}
-                    className="p-4 bg-zinc-800 hover:bg-indigo-600 text-zinc-100 rounded-2xl transition-all shadow-xl group-hover:shadow-indigo-600/20"
-                  >
-                    <QrCode size={28} />
-                  </button>
+                  <div className="flex flex-col items-center space-y-2">
+                    <button
+                      onClick={() => setShowQR(ticket)}
+                      className="p-4 bg-zinc-800 hover:bg-indigo-600 text-zinc-100 rounded-2xl transition-all shadow-xl group-hover:shadow-indigo-600/20"
+                    >
+                      <QrCode size={28} />
+                    </button>
+                    <button
+                      onClick={() => verifyTicket(ticket)}
+                      className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all ${verificationResults[ticket.id] === true
+                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/50'
+                        : verificationResults[ticket.id] === false
+                          ? 'bg-red-500/10 text-red-500 border-red-500/50'
+                          : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-indigo-500'
+                        }`}
+                    >
+                      {verificationLoading === ticket.id ? 'Checking...' :
+                        verificationResults[ticket.id] === true ? 'Verified On-Chain' :
+                          verificationResults[ticket.id] === false ? 'Not Found' : 'Verify My Ticket'}
+                    </button>
+                  </div>
                 </div>
               ))}
               <div className="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center text-zinc-600 hover:border-indigo-500/50 hover:text-indigo-400 transition-all cursor-pointer group">
@@ -452,13 +528,52 @@ const DashboardPage = () => {
           <SidebarItem id="profile" icon={User} label="User Config" />
         </nav>
 
-        <div className="p-6 border-t border-zinc-900">
+        <div className="p-6 border-t border-zinc-900 space-y-4">
+          {connectedAccount ? (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 group relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Wallet Linked</span>
+                <button
+                  onClick={handleDisconnect}
+                  className="text-zinc-500 hover:text-red-400 transition-colors"
+                  title="Disconnect"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
+              <p className="text-[11px] text-zinc-100 font-mono truncate">
+                {connectedAccount}
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleConnect}
+              className="w-full flex items-center justify-center space-x-3 px-6 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl transition-all shadow-lg shadow-indigo-600/20 font-bold text-sm"
+            >
+              <LinkIcon size={18} />
+              <span>Connect Pera</span>
+            </button>
+          )}
+
           <div className="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800/50 mb-4">
-             <div className="flex items-center space-x-3 mb-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Node Status</span>
-             </div>
-             <p className="text-[11px] text-zinc-400 font-mono">Syncing: Block #19,202,412</p>
+            <div className="flex items-center space-x-3 mb-2">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${algoStatus.connected ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                {algoStatus.connected ? 'Node Connected' : 'Node Offline'}
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 font-mono">
+              {algoStatus.connected ? `Round: #${algoStatus.last_round}` : 'Waiting for backend...'}
+            </p>
+            {algoStatus.app_id > 0 && (
+              <>
+                <p className="text-[9px] text-indigo-400 font-mono mt-1">App ID: {algoStatus.app_id}</p>
+                <p className="text-[9px] text-zinc-600 font-mono">Network: Testnet</p>
+              </>
+            )}
+            {algoStatus.asset_id > 0 && (
+              <p className="text-[9px] text-emerald-500 font-mono">Asset ID: {algoStatus.asset_id}</p>
+            )}
           </div>
           <button className="w-full flex items-center space-x-3 px-6 py-4 text-zinc-500 hover:text-red-400 hover:bg-red-500/5 rounded-2xl transition-all">
             <LogOut size={20} />
@@ -473,9 +588,9 @@ const DashboardPage = () => {
         <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900 px-10 py-6 flex items-center justify-between">
           <div className="relative w-full max-w-lg group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-indigo-500 transition-colors" size={20} />
-            <input 
-              type="text" 
-              placeholder="✨ Query: 'Show me high-energy festivals'..." 
+            <input
+              type="text"
+              placeholder="✨ Query: 'Show me high-energy festivals'..."
               className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl py-3.5 pl-12 pr-6 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:bg-zinc-900 transition-all placeholder:text-zinc-700"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -494,7 +609,7 @@ const DashboardPage = () => {
                 <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mt-0.5">Session: X92A-44</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 p-1 group-hover:scale-110 transition-transform ring-2 ring-transparent group-hover:ring-indigo-600/20">
-                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="user" className="w-full h-full rounded-xl bg-zinc-800" />
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="user" className="w-full h-full rounded-xl bg-zinc-800" />
               </div>
             </div>
           </div>
@@ -507,11 +622,10 @@ const DashboardPage = () => {
       </main>
 
       {/* Floating AI Assistant Toggle */}
-      <button 
+      <button
         onClick={() => setIsAssistantOpen(!isAssistantOpen)}
-        className={`fixed bottom-10 right-10 w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-3xl transition-all duration-500 z-[70] group overflow-hidden ${
-          isAssistantOpen ? 'bg-zinc-800 rotate-90 scale-90' : 'bg-indigo-600 hover:bg-indigo-500 hover:scale-110 hover:-translate-y-2'
-        }`}
+        className={`fixed bottom-10 right-10 w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-3xl transition-all duration-500 z-[70] group overflow-hidden ${isAssistantOpen ? 'bg-zinc-800 rotate-90 scale-90' : 'bg-indigo-600 hover:bg-indigo-500 hover:scale-110 hover:-translate-y-2'
+          }`}
       >
         {isAssistantOpen ? <X size={32} /> : <MessageSquare size={32} />}
         {!isAssistantOpen && (
@@ -542,15 +656,14 @@ const DashboardPage = () => {
               </button>
             </div>
           </div>
-          
+
           <div className="flex-grow overflow-y-auto p-8 space-y-6 bg-zinc-950/20">
             {chatMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] px-5 py-4 rounded-[1.5rem] text-sm leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-600/10' 
-                    : 'bg-zinc-900 text-zinc-300 rounded-tl-none border border-zinc-800 shadow-sm'
-                }`}>
+                <div className={`max-w-[85%] px-5 py-4 rounded-[1.5rem] text-sm leading-relaxed ${msg.role === 'user'
+                  ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-600/10'
+                  : 'bg-zinc-900 text-zinc-300 rounded-tl-none border border-zinc-800 shadow-sm'
+                  }`}>
                   {msg.text}
                 </div>
               </div>
@@ -571,15 +684,15 @@ const DashboardPage = () => {
 
           <div className="p-6 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-md">
             <div className="relative group">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Message Stellar..."
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 pl-6 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-700"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               />
-              <button 
+              <button
                 onClick={handleSendMessage}
                 disabled={!userInput.trim() || isTyping}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-600 transition-all shadow-lg active:scale-90"
@@ -594,7 +707,7 @@ const DashboardPage = () => {
       {/* QR Code Modal Overlay */}
       {showQR && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-          <div 
+          <div
             className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-300"
             onClick={() => setShowQR(null)}
           ></div>
@@ -606,7 +719,7 @@ const DashboardPage = () => {
               </div>
               <h3 className="text-3xl font-black text-zinc-100 mb-2 tracking-tight">{showQR.event}</h3>
               <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] mb-10">Entry Token Validation</p>
-              
+
               <div className="bg-white p-8 rounded-[2.5rem] mb-10 shadow-2xl relative group">
                 <div className="absolute -inset-2 bg-indigo-500/20 rounded-[3rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="w-56 h-56 bg-zinc-50 flex flex-wrap items-center justify-center gap-1.5 overflow-hidden rounded-xl relative z-10">
@@ -627,7 +740,7 @@ const DashboardPage = () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setShowQR(null)}
                 className="w-full py-5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl active:scale-95"
               >
