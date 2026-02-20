@@ -106,12 +106,13 @@ The system bridges a modern React frontend with the Algorand blockchain via the 
 ## 👥 Team Members & Roles
 | Name | Role | Responsibility |
 | :--- | :--- | :--- |
-| **Member 1** | Lead Developer | Smart Contract Architecture (Beaker/PyTeal) |
-| **Member 2** | Backend Engineer | Purchase Logic & Asset Management |
-| **Member 3** | Frontend Developer | UI/UX & Verification Logic |
-| **Member 4** | DevOps / Integration | Deployment, Pera Wallet Integration & Testing |
+| **Adwaith C Warrier** | Lead Developer | Smart Contract Architecture (Beaker/PyTeal) |
+| **Adharv S Ravi** | Backend Engineer | Purchase Logic & Asset Management |
+| **Sagar S S** | Frontend Developer | UI/UX & Verification Logic |
+| **Abhinav Kumar** | DevOps / Integration | Deployment, Pera Wallet Integration & Testing |
 
 ---
 
 ## 📄 License
 This project is licensed under the MIT License - see the `LICENSE` file for details.
+
