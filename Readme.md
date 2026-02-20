@@ -94,7 +94,9 @@ The system bridges a modern React frontend with the Algorand blockchain via the 
 * **Attendees:** Connect Pera Wallet, browse available events, and purchase tickets directly from the contract.
 * **Check-in:** At the venue, the app verifies the presence of the specific ASA in the user's wallet for instant entry.
 <img width="1919" height="951" alt="Screenshot 2026-02-20 055045" src="https://github.com/user-attachments/assets/db537c6b-ab8f-4a0d-afa5-08754620e5a0" />
+<img width="1918" height="896" alt="Screenshot 2026-02-20 054913" src="https://github.com/user-attachments/assets/eb6442c8-91cf-44f6-8c0f-eb6fecf599d9" />
 
+<img width="1919" height="966" alt="Screenshot 2026-02-20 054854" src="https://github.com/user-attachments/assets/bc6d0e60-61c5-41e5-b443-7550c6c2e5a0" />
 
 ---
 
@@ -117,5 +119,6 @@ The system bridges a modern React frontend with the Algorand blockchain via the 
 
 ## 📄 License
 This project is licensed under the MIT License - see the `LICENSE` file for details.
+
 
 
