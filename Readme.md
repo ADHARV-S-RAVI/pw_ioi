@@ -21,8 +21,9 @@ By utilizing Algorand’s high-speed, low-cost blockchain with **instant finalit
 ## 🔗 Project Links
 * **Live Demo:** [Visit Application](#) 
 * **Demo Video:** [Watch on LinkedIn](#)
-* **Testnet App ID:** `XXXXXX`
-* **Explorer:** [View on AlgoExplorer](https://testnet.algoexplorer.io/)
+* **Testnet App ID:** `755803513`
+* **Ticket ASA(NFT):** `755803558`
+* **Explorer:** [View on AlgoExplorer]([https://testnet.algoexplorer.io/](https://testnet.algoscan.app/app/755803513))
 
 ---
 
@@ -119,6 +120,7 @@ The system bridges a modern React frontend with the Algorand blockchain via the 
 
 ## 📄 License
 This project is licensed under the MIT License - see the `LICENSE` file for details.
+
 
 
 
